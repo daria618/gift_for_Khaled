@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta name="robots" content="noindex, nofollow">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Наша история в каждом шарике... ✨</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Montserrat:wght@300;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --gold: #FFD700;
+            --white: #ffffff;
+            --bg-dark: #050A18;
+        }
+
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            overflow: hidden; font-family: 'Montserrat', sans-serif;
+            background-color: var(--bg-dark); color: var(--white);
+        }
+
+        #snow-canvas { position: fixed; top: 0; left: 0; pointer-events: none; z-index: 1; }
+
+        /* Экран входа */
+        #overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, #1a2a44, #050a18);
+            display: flex; flex-direction: column; justify-content: center;
+            align-items: center; z-index: 2000; transition: 1s;
+        }
+        #start-btn {
+            padding: 20px 40px; font-size: 20px; cursor: pointer;
+            background: var(--gold); border: none; border-radius: 50px;
+            font-weight: bold; color: #000; transition: 0.3s;
+        }
+        #start-btn:hover { transform: scale(1.1); box-shadow: 0 0 20px var(--gold); }
+
+        /* Сцена */
+        .scene {
+            position: relative; height: 100vh; display: flex;
+            justify-content: center; align-items: flex-end; z-index: 2;
+        }
+        
+        .tree-wrapper {
+            position: relative; height: 90vh; aspect-ratio: 2 / 3; 
+            display: flex; justify-content: center;
+        }
+
+        #tree-image { position: absolute; bottom: 0; width: 100%; height: 100%; object-fit: contain; z-index: 5; }
+
+        /* Стили Шариков */
+        .toy {
+            position: absolute; width: 55px; height: 55px;
+            border-radius: 50%; border: 2px solid var(--gold);
+            cursor: pointer; z-index: 10;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            background: radial-gradient(circle at 30% 30%, #ffeb3b, #fbc02d);
+            box-shadow: 0 0 15px rgba(255,215,0,0.5);
+            display: flex; justify-content: center; align-items: center;
+            color: #5e4001; font-weight: bold; font-family: 'Playfair Display', serif; font-size: 18px;
+        }
+        .toy:hover { transform: scale(1.15); box-shadow: 0 0 25px var(--gold); }
+
+        /* ПОЗИЦИИ */
+        .pos-1-1 { top: 25%; left: 45%; }
+        .pos-2-1 { top: 40%; left: 37%; }
+        .pos-2-2 { top: 40%; right: 37%; }
+        .pos-3-1 { top: 57%; left: 25%; }
+        .pos-3-2 { top: 59%; left: 45%; }
+        .pos-3-3 { top: 57%; right: 25%; }
+        .pos-4-1 { top: 75%; left: 15%; }
+        .pos-4-2 { top: 78%; left: 36%; }
+        .pos-4-3 { top: 78%; right: 34%; }
+        .pos-4-4 { top: 75%; right: 15%; }
+
+        /* ГАЛЕРЕЯ И КАРУСЕЛЬ */
+        #carousel-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); display: none; z-index: 5000;
+            justify-content: center; align-items: center; flex-direction: column;
+        }
+        
+        .carousel-wrapper { position: relative; width: 85%; max-width: 800px; text-align: center; }
+        
+        .carousel-slide {
+            width: 100%; max-height: 70vh; object-fit: contain; border-radius: 15px;
+            box-shadow: 0 0 30px rgba(255,215,0,0.3);
+        }
+
+        .photo-caption {
+            color: white; font-size: 20px; margin-top: 20px; font-style: italic;
+            text-shadow: 1px 1px 5px #000; min-height: 1.2em;
+        }
+
+        .nav-btn {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            background: rgba(255,215,0, 0.8); border: none; color: #000;
+            font-size: 28px; padding: 12px 18px; cursor: pointer; border-radius: 50%;
+            transition: 0.3s;
+        }
+        .nav-btn:hover { background: var(--gold); transform: translateY(-50%) scale(1.1); }
+        .prev { left: -75px; }
+        .next { right: -75px; }
+
+        .close-btn { position: absolute; top: -55px; right: 0; color: white; font-size: 50px; cursor: pointer; }
+
+        .instruction {
+            position: absolute; top: 30px; width: 100%; text-align: center;
+            font-family: 'Playfair Display', serif; font-size: 26px;
+            color: var(--gold); text-shadow: 0 0 10px #000; z-index: 5;
+        }
+
+        .side-image { position: absolute; bottom: 20px; height: auto; max-height: 500px; object-fit: contain; z-index: 4; }
+        .gift-left { left: -270px; max-width: 200px; }
+        .gift-far-left { left: -370px; max-width: 150px; }
+        .snowman-right { right: -450px; max-width: 450px; }
+        /* Улучшенный праздничный таймер */
+#countdown {
+    position: fixed;
+    top: 25px;
+    right: 25px;
+    background: rgba(5, 10, 24, 0.8); /* Темный полупрозрачный фон */
+    padding: 20px;
+    border-radius: 20px;
+    border: 2px solid var(--gold);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+    z-index: 1000;
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 280px;
+}
+
+.countdown-title {
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 15px;
+    font-weight: 500;
+}
+
+.timer-grid {
+    display: flex;
+    gap: 15px;
+}
+
+.timer-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 60px;
+}
+
+.timer-number {
+    font-family: 'Playfair Display', serif;
+    font-size: 38px; /* Крупные цифры */
+    font-weight: 700;
+    color: var(--white);
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+    line-height: 1;
+}
+
+.timer-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-top: 5px;
+    opacity: 0.8;
+}
+        /* Чтобы подарки подпрыгивали при наведении */
+        .side-image { cursor: pointer; transition: 0.3s; }
+        .side-image:hover { transform: translateY(-10px) scale(1.05); filter: brightness(1.2); }
+    </style>
+</head>
+<body>
+
+    <div id="countdown">
+        <div class="countdown-title">До Нового Года</div>
+        <div class="timer-grid">
+            <div class="timer-item">
+                <span class="timer-number" id="days">00</span>
+                <span class="timer-label">дней</span>
+            </div>
+            <div class="timer-item">
+                <span class="timer-number" id="hours">00</span>
+                <span class="timer-label">часов</span>
+            </div>
+            <div class="timer-item">
+                <span class="timer-number" id="mins">00</span>
+                <span class="timer-label">мин</span>
+            </div>
+            <div class="timer-item">
+                <span class="timer-number" id="secs">00</span>
+                <span class="timer-label">сек</span>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <div id="overlay">
+        <h1 style="color: var(--gold); margin-bottom: 30px;">С Новым Годом, Любимый!</h1>
+        <button id="start-btn">Открыть подарок 🎁</button>
+    </div>
+
+    <canvas id="snow-canvas"></canvas>
+    <div class="instruction">Нажимай на шарики, чтобы вспомнить наши моменты ✨
+        <br>Обязательно проверь все шарики! ❄ 
+    </div>
+
+    <div id="carousel-modal">
+        <div class="carousel-wrapper">
+            <span class="close-btn" onclick="closeCarousel()">&times;</span>
+            
+            <img id="current-img" class="carousel-slide" src="" alt="Memory" style="display: block;">
+            
+            <video id="current-video" class="carousel-slide" controls style="display: none; width: 100%;"></video>
+            
+            <p id="photo-desc" class="photo-caption"></p>
+            <button class="nav-btn prev" onclick="changeSlide(-1)">&#10094;</button>
+            <button class="nav-btn next" onclick="changeSlide(1)">&#10095;</button>
+        </div>
+        <h2 id="month-title" style="color: var(--gold); font-family: 'Playfair Display'; margin-top: 15px;"></h2>
+    </div>
+
+    <div class="scene">
+        <div class="tree-wrapper">
+            <img id="tree-image" src="ёлка.png" alt="Новогодняя елка">
+            
+            <div class="toy pos-1-1" onclick="openGallery('Март', [
+                {src: 'photo_03_1.png', text: 'Впервые играли вместе ✨'},
+                {src: 'photo_03_2.png', text: 'Делились едой'},
+                {src: 'photo_03_3.png', text: 'Узнали то, что знать не положено...'},
+                {src: 'photo_03_4.png', text: 'Сошли с ума после этих открытий...'},
+                {src: 'photo_03_5.png', text: 'И конечно же наши жопичи и батонычи 🐶🐈'},
+                {src: 'photo_03_6.png', text: '🐶'},
+                {src: 'photo_03_7.png', text: '🐈'},
+                {src: 'photo_03_8.png', text: 'Как всегда угашенная Шугар) 🐈'}
+            ], 'music_03.mp3')">03</div>
+
+            <div class="toy pos-2-1" onclick="openGallery('Апрель', [
+                {src: 'photo_04_1.png', text: 'Надували пузыри'},
+                {src: 'video_04_1.mp4', text: 'и лопали их 👻'},
+                {src: 'video_04_2.mp4', text: 'Играли в пугашку смешняшку 👻'},
+                {src: 'photo_04_03.png', text: 'Засыпали вместе'},
+                {src: 'photo_04_2.png', text: 'И снова спали'},
+                {src: 'photo_04_04.png', text: 'Были под наблюдением короля..'},
+                {src: 'photo_04_05.png', text: 'Халед кормил меня'},
+                {src: 'photo_04_06.png', text: 'Знакомились с мамой'},
+                {src: 'photo_04_07.png', text: 'Одна из моих самых любимых фотографий моего Улыбашки 😋'}
+            ], 'music_04.mp3')">04</div>
+
+            <div class="toy pos-2-2" onclick="openGallery('Май', [
+                {src: 'photo_05_01.png', text: 'Приручали попрошайку'},
+                {src: 'photo_05_02.png', text: 'Халюша усердно работал в мае'},
+                {src: 'photo_05_03.png', text: 'Просто сладкий батончик'},
+                {src: 'photo_05_04.png', text: 'Засеря'},
+                {src: 'photo_05_05.png', text: 'Снова засыпали вместе'},
+                {src: 'photo_05_06.png', text: 'И снова'},
+                {src: 'video_05_1.mp4', text: ' 👻'},
+                {src: 'photo_05_07.png', text: 'Чечня на связи'},
+                {src: 'photo_05_08.png', text: 'Звонки кудряшки с работы'},
+                {src: 'photo_05_09.png', text: 'Два брата акробата'},
+                {src: 'photo_05_11.png', text: 'А это мы с Халюшей'},
+                {src: 'photo_05_10.png', text: 'Первая совместная фотография!'},
+                {src: 'video_05_2.mp4', text: ' Чуть палец не съели'}
+            ], 'music_05.mp3')">05</div>
+
+            <div class="toy pos-3-1" onclick="openGallery('Июнь', [
+                {src: 'photo_06_01.png', text: 'Автопортрет Халеда'},
+                {src: 'photo_06_02.png', text: 'Прощались с Веней вновь...'},
+                {src: 'video_06_1.mp4', text: 'Проводили'},
+                {src: 'video_06_2.mp4', text: 'Урок ауры от Халеда'}
+            ], 'music_06.mp3')">06</div>
+
+            <div class="toy pos-3-2" onclick="openGallery('Июль', [
+                {src: 'video_07_01.mp4', text: 'Веня грустил в заточении у инопланетян'},
+                {src: 'video_07_04.mp4', text: 'Жопичи отправились на спасение'},
+                {src: 'video_07_06.mp4', text: 'Жопичи отправились на спасение'},
+                {src: 'video_07_05.mp4', text: 'Ну а Спайса никто и не спрашивал'},
+                {src: 'photo_07_01.png', text: 'Опять храпели вместе'},
+                {src: 'photo_07_05.png', text: 'И снова'},
+                {src: 'video_07_09.mp4', text: 'Кушали вместе пряники'},
+                {src: 'photo_07_02.png', text: '❤️'},
+                {src: 'video_07_4.mp4', text: 'Халюша закатывал глаза, как только мог'},
+                {src: 'video_07_8.mp4', text: 'Халед в походе'},
+                {src: 'photo_07_03.png', text: 'Обменивались фотографиями'},
+                {src: 'photo_07_04.png', text: 'Обменивались фотографиями'},
+                {src: 'photo_07_06.png', text: 'Приглашали в гости'},
+                {src: 'photo_07_07.png', text: 'Вторая совместная фотография!'},
+                {src: 'photo_07_08.png', text: 'Первый поцелуй!'}
+
+            ], 'music_07.mp3')">07</div>
+
+            <div class="toy pos-3-3" onclick="openGallery('Август', [
+                {src: 'video_08_01.mp4', text: 'Халед рассказывал страшные истории на ночь 👻'},
+                {src: 'video_08_02.mp4', text: 'Просто моя милашка'},
+                {src: 'photo_08_01.png', text: 'Грустили'},
+                {src: 'photo_08_02.png', text: 'Пока я была в снегу...'},
+                {src: 'photo_08_03.png', text: 'Халед убил оленя!'},
+                {src: 'photo_08_04.png', text: 'Сопели вместе'},
+                {src: 'photo_08_05.png', text: 'Делали маски!'},
+                {src: 'video_08_04.mp4', text: 'Заказывали бургеры в 11 ночи 🙄'},
+                {src: 'photo_08_07.png', text: '😎'},
+                {src: 'photo_08_06.png', text: 'Первый окунь Халеда ААААА!!!'}
+            ], 'music_08.mp3')">08</div>
+
+            <div class="toy pos-4-1" onclick="openGallery('Сентябрь', [
+                {src: 'video_09_01.mp4', text: '👻'},
+                {src: 'photo_09_01.png', text: ':)'},
+                {src: 'photo_09_02.png', text: 'Сопелки'},
+                {src: 'video_09_02.mp4', text: 'Милашка мой'},
+                {src: 'photo_09_03.png', text: 'Халед радуется, что в цирке были полуголые женщины😎 (Шутка)'},
+                {src: 'photo_09_04.png', text: 'Начало эры слипнот 🎸🥁📀'},
+                {src: 'photo_09_05.png', text: 'Халед спас Веню из заточения!'},
+                {src: 'photo_09_06.png', text: 'Второй поцелуй!'}
+            ], 'music_10.mp3')">09</div>
+
+            <div class="toy pos-4-2" onclick="openGallery('Октябрь', [
+                {src: 'video_10_01.mp4', text: 'они настолько сдружились, что спали в одной кровати'},
+                {src: 'video_10_02.mp4', text: 'Халюша стал меломаном'},
+                {src: 'photo_10_01.png', text: 'В школе у доски Халюня'},
+                {src: 'photo_10_02.png', text: 'Мама отвернулась, все были нашпынены и все деньги отобраны'},
+                {src: 'photo_10_03.png', text: 'Воздушный поцелуйчик для Халеда'},
+                {src: 'photo_10_04.png', text: 'Любимки Халеда в манге'},
+                {src: 'photo_10_05.png', text: 'Мой круассанчик'},
+                {src: 'photo_10_06.png', text: '❤️'},
+                {src: 'photo_10_07.png', text: 'Купила сосисек для Халеда'},
+                {src: 'photo_10_08.png', text: 'Съела одна в кровати 🤗'},
+                {src: 'photo_10_09.png', text: 'С миллениалами'}
+            ], 'music_09.mp3')">10</div>
+
+            <div class="toy pos-4-3" onclick="openGallery('Ноябрь', [
+                {src: 'video_11_01.mp4', text: 'Любимый смеяшка'},
+                {src: 'video_11_02.mp4', text: 'Кусашка'},
+                {src: 'video_11_03.mp4', text: 'Игруля'},
+                {src: 'photo_11_01.png', text: 'С миллениалами 2'},
+                {src: 'video_11_04.mp4', text: 'Стоит глазки'},
+                {src: 'photo_11_02.png', text: 'Pizza boy 🎸'}
+            ], 'music_11.mp3')">11</div>
+
+            <div class="toy pos-4-4" onclick="openGallery('Декабрь', [
+            {src: 'photo_12_01.png', text: 'Это я френчи Дарюша весь декабрь'},
+            {src: 'photo_12_02.png', text: 'А это Халюша'},
+            {src: 'video_12_01.mp4', text: 'Очень трогательный кружок'},
+            {src: 'photo_12_05.png', text: 'За 10 минут до ....'},
+            {src: 'photo_12_03.png', text: 'До превращения в Веню!'},
+            {src: 'photo_12_04.png', text: 'И очень этому рад)'}
+            ], 'music_12.mp3')">12</div>
+
+
+            <img src="gift1.png" alt="Подарок" class="side-image gift-left" 
+            onclick="openGallery('Наш Стёпа!',[{src: 'we.mp4', text: 'С Новым Годом! ❤️'}], 'music_gift.mp3')">
+
+            <img src="gift2.png" alt="Подарок 2" class="side-image gift-far-left">
+            
+            <img src="snowman.png" alt="Снеговик" class="side-image snowman-right">
+        </div>
+    </div>
+    
+    <audio id="bg-music" loop src="bg_music.mp3"></audio>
+    <audio id="toy-music"></audio>
+
+    <script>
+        const pass = prompt("Введите секретное слово:");
+if (pass !== "pfcthz") {
+    document.body.innerHTML = "Доступ закрыт";
+}
+    const canvas = document.getElementById('snow-canvas');
+const ctx = canvas.getContext('2d');
+let W = window.innerWidth, H = window.innerHeight, flakes = [];
+
+// 1. СНЕГОПАД
+function initSnow() {
+    canvas.width = W; canvas.height = H;
+    for (let i = 0; i < 120; i++) {
+        flakes.push({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 3 + 1 });
+    }
+    draw();
+}
+
+function draw() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = "white"; ctx.beginPath();
+    flakes.forEach(f => { ctx.moveTo(f.x, f.y); ctx.arc(f.x, f.y, f.r, 0, Math.PI * 2, true); });
+    ctx.fill(); 
+    flakes.forEach(f => { f.y += f.r * 0.5; if (f.y > H) f.y = -10; });
+    requestAnimationFrame(draw);
+}
+
+// 2. ТАЙМЕР
+function updateTimer() {
+    const now = new Date();
+    // Устанавливаем цель: 1 января 2026 года
+    const nextYear = new Date(2026, 0, 1); 
+    const diff = nextYear - now;
+
+    if (diff <= 0) {
+        document.querySelector('.countdown-title').textContent = "С НОВЫМ ГОДОМ!!!";
+        return;
+    }
+
+    const d = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const h = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const m = Math.floor((diff / 1000 / 60) % 60);
+    const s = Math.floor((diff / 1000) % 60);
+
+    document.getElementById('days').textContent = d;
+    document.getElementById('hours').textContent = h.toString().padStart(2, '0');
+    document.getElementById('mins').textContent = m.toString().padStart(2, '0');
+    document.getElementById('secs').textContent = s.toString().padStart(2, '0');
+}
+// Запускаем сразу и ставим интервал
+updateTimer();
+setInterval(updateTimer, 1000);
+
+// 3. ГАЛЕРЕЯ И ЗВУК
+const bgMusic = document.getElementById('bg-music');
+const toyMusic = document.getElementById('toy-music');
+const modal = document.getElementById('carousel-modal');
+const currentImg = document.getElementById('current-img');
+const currentVid = document.getElementById('current-video');
+const photoDesc = document.getElementById('photo-desc');
+const monthTitle = document.getElementById('month-title');
+
+let currentPhotos = [];
+let photoIndex = 0;
+
+document.getElementById('start-btn').onclick = () => {
+    document.getElementById('overlay').style.opacity = '0';
+    setTimeout(() => document.getElementById('overlay').style.display = 'none', 1000);
+    bgMusic.play();
+    bgMusic.volume = 0.4;
+    initSnow();
+};
+
+function openGallery(month, photos, music) {
+    currentPhotos = photos;
+    photoIndex = 0;
+    monthTitle.textContent = month;
+    toyMusic.src = music;
+    toyMusic.play().catch(e => console.log("Музыка не найдена"));
+    bgMusic.pause();
+    updateSlide();
+    modal.style.display = 'flex';
+}
+
+function changeSlide(dir) {
+    photoIndex = (photoIndex + dir + currentPhotos.length) % currentPhotos.length;
+    updateSlide();
+}
+
+function updateSlide() {
+    const p = currentPhotos[photoIndex];
+    
+    if (p.src.toLowerCase().endsWith('.mp4')) {
+        currentImg.style.display = 'none';
+        currentVid.style.display = 'block';
+        currentVid.src = p.src;
+        currentVid.play();
+        // ГЛУШИМ МУЗЫКУ МЕСЯЦА ДЛЯ ВИДЕО
+        toyMusic.volume = 0.1; 
+    } else {
+        currentVid.style.display = 'none';
+        currentVid.pause();
+        currentImg.style.display = 'block';
+        currentImg.src = p.src;
+        // ВОЗВРАЩАЕМ ГРОМКОСТЬ ДЛЯ ФОТО
+        toyMusic.volume = 1.0;
+    }
+    photoDesc.textContent = p.text;
+}
+
+function closeCarousel() {
+    modal.style.display = 'none';
+    currentVid.pause();
+    toyMusic.pause();
+    bgMusic.play();
+}
+
+// 4. УПРАВЛЕНИЕ КЛАВИШАМИ (ESC и СТРЕЛКИ)
+window.addEventListener('keydown', (e) => {
+    if (modal.style.display === 'flex') {
+        if (e.key === 'Escape') closeCarousel();
+        if (e.key === 'ArrowRight') changeSlide(1);
+        if (e.key === 'ArrowLeft') changeSlide(-1);
+    }
+});
+
+window.onresize = () => { W = window.innerWidth; H = window.innerHeight; canvas.width = W; canvas.height = H; };
+    
+window.onblur = function () {
+    document.title = "Вернись к нашей ёлочке... 🥺";
+  };
+  window.onfocus = function () {
+    document.title = "Для самого любимого ❤️"; // Сюда напиши основной заголовок
+  };
+
+    </script>
+</body>
+</html>
